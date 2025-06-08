@@ -1,0 +1,4 @@
+- name: call-llm
+  container:
+    image: rag-pipeline:latest
+    command: ["python", "scripts/call_llm.py"]

@@ -1,0 +1,4 @@
+- name: user-embedding
+  container:
+    image: rag-pipeline:latest
+    command: ["python", "scripts/user_embedding.py"]
