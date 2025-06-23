@@ -28,24 +28,15 @@ router = APIRouter()
 async def generate_chapters(request: Request, requestDto: ChapterGenerateRequestDto):
     current_user = get_current_user(request)
     logger.info(f"Current user: {current_user}")
-    if requestDto.user_name.strip() == "":
-        raise HTTPException(
-            status_code=400, detail="Name is required and cannot be empty."
-        )
 
     try:
         # Collect the results as they are returned by the flow
         flow = Flow.load("../flows/chapters/standard/generate_chapter/flow.dag.yaml")
         chapters = flow(
             gender=requestDto.gender,
-            occupation=requestDto.occupation,
-            user_name=requestDto.user_name,
-            date_of_birth=requestDto.date_of_birth,
-            has_children=requestDto.has_children,
+            age=requestDto.age,
             education_level=requestDto.education_level,
-            marital_status=requestDto.marital_status,
-            major_achievements=requestDto.major_achievements,
-            autobiography_theme=requestDto.autobiography_theme,
+            marital_status=requestDto.marital_status
         )
 
         # Directly accumulate chapter content into the result string

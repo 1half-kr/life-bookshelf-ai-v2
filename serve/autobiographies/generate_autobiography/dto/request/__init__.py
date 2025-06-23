@@ -6,23 +6,16 @@ from constants import Gender, ConversationType
 
 
 class UserInfoDto(BaseModel):
-    user_name: str = Field(default="최시원")
-    date_of_birth: date = Field(default="2000-02-21")
+    age: date = Field(default="2000-02-21")
     gender: Gender = Field(default=Gender.FEMALE)
-    has_children: bool = Field(default=False)
-    occupation: str = Field(default="프로그래머")
     education_level: str = Field(default="대학교 재학")
     marital_status: str = Field(default="미혼")
 
 
 class ChapterInfoDto(BaseModel):
     title: str = Field(default="20대")
-    description: str = Field(default="대학 생활과 첫 직장 경험")
-
-
-class SubChapterInfoDto(BaseModel):
-    title: str = Field(default="첫 직장 생활")
-    description: str = Field(default="소프트웨어 회사에서의 첫 직장 경험과 적응 과정")
+    sub_title: str = Field(default="대학 생활과 첫 직장 경험")
+    sub_topic: str = Field(default="대학 생활과 첫 직장 경험에 대한 이야기")
 
 
 class InterviewContentDto(BaseModel):
@@ -35,7 +28,6 @@ class InterviewContentDto(BaseModel):
 class AutobiographyGenerateRequestDto(BaseModel):
     user_info: UserInfoDto
     chapter_info: ChapterInfoDto
-    sub_chapter_info: SubChapterInfoDto
     interviews: List[InterviewContentDto] = Field(
         default=[
             InterviewContentDto(),

@@ -3,19 +3,15 @@ import os
 from fastapi import FastAPI
 from promptflow.connections import AzureOpenAIConnection, OpenAIConnection
 from promptflow.client import PFClient
+from fastapi.middleware.cors import CORSMiddleware
+
 from dotenv import load_dotenv
 
 from autobiographies.generate_autobiography.router import (
     router as autobiographies_generate_autobiography_router,
 )
-from autobiographies.generate_correction.router import (
-    router as autobiographies_generate_correction_router,
-)
 from chapters.generate_chapter.router import (
     router as autobiographies_generate_chapter_router,
-)
-from interviews.generate_interview_question.router import (
-    router as interviews_generate_interview_question_router,
 )
 from interviews.interview_chat.router import (
     router as interviews_request_interview_chat_router,
@@ -23,7 +19,7 @@ from interviews.interview_chat.router import (
 
 from logs import get_logger
 
-load_dotenv()
+load_dotenv(dotenv_path=".env.development")
 
 logger = get_logger()
 
@@ -59,12 +55,26 @@ create_connection()
 app = FastAPI(
     description="Life Bookshelf AI API",
     version="0.0.1",
+    docs_url="/docs",
+    root_path="/ai"
+)
+
+origins = [
+    "http://localhost:8080",  # MagicMirror 클라이언트 주소
+    "http://127.0.0.1:8080",
+    "http://10.165.145.241:8080"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 또는 ["*"]로 전체 허용 (개발용)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(autobiographies_generate_autobiography_router)
-app.include_router(autobiographies_generate_correction_router)
 app.include_router(autobiographies_generate_chapter_router)
-app.include_router(interviews_generate_interview_question_router)
 app.include_router(interviews_request_interview_chat_router)
 
 
