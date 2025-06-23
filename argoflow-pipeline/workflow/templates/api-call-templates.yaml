@@ -1,0 +1,70 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: api-call-templates
+spec:
+  templates:
+    - name: call-iot-api
+      container:
+        image: curlimages/curl:latest
+        command: ["curl"]
+        args:
+          - -X
+          - POST
+          - http://iot-server.example.com/api/input
+          - -H
+          - "Content-Type: application/json"
+          - -d
+          - '{"sessionId":"abc123"}'
+
+    - name: call-emotion-api
+      container:
+        image: curlimages/curl:latest
+        command: ["curl"]
+        args:
+          - -X
+          - POST
+          - http://emotion-server.example.com/api/recognize
+          - -H
+          - "Content-Type: application/json"
+          - -d
+          - '{"sessionId":"abc123"}'
+
+    - name: call-question-api
+      container:
+        image: curlimages/curl:latest
+        command: ["curl"]
+        args:
+          - -X
+          - POST
+          - http://langchain.example.com/query
+          - -H
+          - "Content-Type: application/json"
+          - -d
+          - '{"prompt":"추천 질문"}'
+
+    - name: call-spellcheck-api
+      container:
+        image: curlimages/curl:latest
+        command: ["curl"]
+        args:
+          - -X
+          - POST
+          - http://spellcheck.example.com/api/correct
+          - -H
+          - "Content-Type: application/json"
+          - -d
+          - '{"text":"초안 자서전"}'
+
+    - name: call-publish-api
+      container:
+        image: curlimages/curl:latest
+        command: ["curl"]
+        args:
+          - -X
+          - POST
+          - http://publisher.example.com/api/publish
+          - -H
+          - "Content-Type: application/json"
+          - -d
+          - '{"doc_id":"1234", "format":"pdf"}'

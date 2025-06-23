@@ -1,4 +1,0 @@
-- name: generate-prompt
-  container:
-    image: rag-pipeline:latest
-    command: ["python", "scripts/generate_prompt.py"]

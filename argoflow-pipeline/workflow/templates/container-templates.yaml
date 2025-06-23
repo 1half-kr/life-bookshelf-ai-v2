@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: container-templates
+spec:
+  templates:
+    - name: receive-answer
+      container:
+        image: ghcr.io/myteam/autobio-core:latest
+        command: ["python", "receive.py"]
+
+    - name: generate-autobio
+      container:
+        image: ghcr.io/myteam/autobio-core:latest
+        command: ["python", "generate.py"]
+
+    - name: merge-autobio
+      container:
+        image: ghcr.io/myteam/autobio-core:latest
+        command: ["python", "merge.py"]

@@ -172,3 +172,6 @@ mlruns/
 
 # To test functions locally
 flow_code
+
+# argo workflows
+argoflow-pipelines/manifests/
