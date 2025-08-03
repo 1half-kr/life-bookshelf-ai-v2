@@ -33,6 +33,11 @@ cd serve
 python main_pipeline.py
 ```
 
+# 필요한 경우 redis 실행
+```bash
+docker run -d -p 6379:6379 redis
+```
+
 ### 테스트
 ```bash
 # 대화 테스트
