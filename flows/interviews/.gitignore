@@ -1,7 +1,0 @@
-.env
-__pycache__/
-.promptflow/*
-!.promptflow/flow.tools.json
-.runs/
-data/dummy_questions.csv
-data/split_documents.pkl

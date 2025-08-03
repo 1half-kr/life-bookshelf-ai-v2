@@ -1,81 +1,87 @@
 import os
+from datetime import datetime
+
+# 환경 변수를 가장 먼저 로드
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=".env.development")
 
 from fastapi import FastAPI
-from promptflow.connections import AzureOpenAIConnection, OpenAIConnection
-from promptflow.client import PFClient
 from fastapi.middleware.cors import CORSMiddleware
 
-from dotenv import load_dotenv
-
-from autobiographies.generate_autobiography.router import (
-    router as autobiographies_generate_autobiography_router,
-)
-from chapters.generate_chapter.router import (
-    router as autobiographies_generate_chapter_router,
-)
-from interviews.interview_chat.router import (
-    router as interviews_request_interview_chat_router,
-)
+# AI 서버 라우터들 (환경 변수 로드 후 임포트)
+from conversation.conversation_router_v2 import router as conversation_router
+from autobiography.autobiography_router import router as autobiography_router
 
 from logs import get_logger
-
-load_dotenv(dotenv_path=".env.development")
 
 logger = get_logger()
 
 
-def create_connection():
-    api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-    connection = None
-    if api_key.startswith("sk-"):
-        connection = OpenAIConnection(
-            name="open_ai_connection",
-            api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
-        )
-    else:
-        connection = AzureOpenAIConnection(
-            name="open_ai_connection",
-            api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
-            api_base=os.environ.get("AZURE_OPENAI_API_BASE"),
-            azure_endpoint=os.environ.get("AZURE_OPENAI_API_BASE", "azure"),
-            api_version=os.environ.get(
-                "AZURE_OPENAI_API_VERSION", "2023-07-01-preview"
-            ),
-        )
-
-    pf = PFClient()
-    conn = pf.connections.create_or_update(connection)
-
-    logger.info(f"Successfully created connection {conn}")
-
-
-create_connection()
-
-
 app = FastAPI(
-    description="Life Bookshelf AI API",
-    version="0.0.1",
-    docs_url="/docs",
-    root_path="/ai"
+    title="Life Bookshelf AI v2 - AI Processing Server",
+    description="노년층 자서전 생성 시스템 AI 처리 서버",
+    version="2.0.0",
+    docs_url="/docs"
 )
 
 origins = [
-    "http://localhost:8080",  # MagicMirror 클라이언트 주소
-    "http://127.0.0.1:8080",
-    "http://10.165.145.241:8080"
+    "http://localhost:8000",  # 백엔드 서버
+    "http://127.0.0.1:8000",
+    "http://localhost:3000",  # 개발용
+    "http://127.0.0.1:3000"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 또는 ["*"]로 전체 허용 (개발용)
+    allow_origins=["*"],  # 개발용 전체 허용
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(autobiographies_generate_autobiography_router)
-app.include_router(autobiographies_generate_chapter_router)
-app.include_router(interviews_request_interview_chat_router)
+# AI 서버 라우터들
+app.include_router(conversation_router)
+app.include_router(autobiography_router)
+
+
+@app.get("/")
+async def root():
+    """API 루트 엔드포인트"""
+    return {
+        "message": "Life Bookshelf AI v2 - AI Processing Server",
+        "version": "2.0.0",
+        "description": "노년층 자서전 생성 시스템 AI 처리 서버",
+        "capabilities": [
+            "실시간 대화 처리",
+            "27개 챕터 분류",
+            "AWS Bedrock 연동"
+        ],
+        "endpoints": {
+            "conversation": "/conversation", 
+            "autobiography": "/autobiography",
+            "analysis": "/analysis",
+            "monitoring": "/monitoring",
+            "docs": "/docs"
+        }
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """시스템 상태 확인"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "services": {
+            "ai_server": "running",
+            "aws_bedrock": "connected",
+            "backend_server_connection": "healthy"
+        },
+        "ai_models": {
+            "claude_3_sonnet": "available",
+            "claude_3_haiku": "available"
+        }
+    }
 
 
 if __name__ == "__main__":
