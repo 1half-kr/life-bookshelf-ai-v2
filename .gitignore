@@ -122,8 +122,16 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Environment variables - NEVER commit these!
 .env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.test
+*.env
+
+# Virtual environments
 .venv
 env/
 venv/
@@ -158,14 +166,13 @@ cython_debug/
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+#  and can be added to the global gitignore or merged into this project's .gitignore.
 #.idea/
 
 # MLFlow sandbox
 mlruns/
 
-# Promt flow folders
+# Prompt flow folders
 .promptflow
 .index
 .pdfs
@@ -173,5 +180,43 @@ mlruns/
 # To test functions locally
 flow_code
 
-# argo workflows
+# Argo workflows
 argoflow-pipelines/manifests/
+
+# Application logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.directory
+
+# Pipeline cache and temporary data
+pipeline_cache/
+temp_data/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes secrets
+secrets/
+*.key
+*.pem
+*.crt
