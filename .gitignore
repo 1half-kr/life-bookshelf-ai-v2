@@ -180,9 +180,6 @@ mlruns/
 # To test functions locally
 flow_code
 
-# Argo workflows
-argoflow-pipelines/manifests/
-
 # Application logs
 logs/
 *.log
@@ -207,13 +204,13 @@ Thumbs.db
 # OS generated files
 .directory
 
-# Pipeline cache and temporary data
-pipeline_cache/
-temp_data/
-
 # Docker
 .dockerignore
 docker-compose.override.yml
+
+# Vector Database
+chroma_db/
+*.chroma
 
 # Kubernetes secrets
 secrets/

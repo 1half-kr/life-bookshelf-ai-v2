@@ -1,0 +1,14 @@
+# FastAPI 및 기본 의존성
+fastapi==0.115.9
+uvicorn==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# Vector Database (호환성 버전)
+chromadb==0.4.18
+sentence-transformers==2.2.2
+numpy<2.0
+
+# 유틸리티
+python-dotenv==1.0.0
+httpx==0.28.1
