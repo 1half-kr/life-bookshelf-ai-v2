@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  lifebookshelf-ai-v1:
+    image: "211125363878.dkr.ecr.ap-northeast-2.amazonaws.com/lifebookshelf-ai:latest"
+    restart: always
+    container_name: "lifebookshelf-main"
+    ports:
+      - "3000:3000"
+    networks:
+      - lifebookshelf-ai-network
+    volumes:
+      - $HOME/logs/:/logs/
+    env_file:
+      - serve/.env.production
+
+  # Life Bookshelf AI v2 서비스
+  lifebookshelf-ai-v2:
+    build:
+      context: ..
+      dockerfile: deploy/ai/Dockerfile-v2
+    container_name: lifebookshelf-ai-v2
+    ports:
+      - "3000:3000"
+    volumes:
+      # Vector Database 영구 저장
+      - chroma_data:/app/chroma_db
+      # 로그 저장
+      - logs_data:/app/logs
+    env_file:
+      - serve/.env.production
+    networks:
+      - lifebookshelf-ai-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Nginx 리버스 프록시
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: lifebookshelf-nginx
+    ports:
+      - "80:80"
+      - "8090:8090"  # 모니터링 포트
+    depends_on:
+      - lifebookshelf-ai-v2
+    networks:
+      - lifebookshelf-ai-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  # Vector Database 영구 저장소
+  chroma_data:
+    driver: local
+  # 로그 저장소
+  logs_data:
+    driver: local
+
+networks:
+  lifebookshelf-ai-network:
+    driver: bridge

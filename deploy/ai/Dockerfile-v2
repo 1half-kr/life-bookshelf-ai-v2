@@ -1,0 +1,37 @@
+FROM python:3.9-slim
+
+# 시스템 패키지 설치 (AI/ML 라이브러리 의존성)
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# Python 의존성 설치 (캐시 최적화)
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# 애플리케이션 코드 복사
+COPY ./serve/ ./serve/
+COPY ./shared/ ./shared/
+
+# Vector Database 디렉토리 생성
+RUN mkdir -p /app/chroma_db /app/logs
+
+# 작업 디렉토리를 serve로 변경
+WORKDIR /app/serve
+
+# 포트 노출
+EXPOSE 3001
+
+# Health check 추가
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3001/health || exit 1
+
+# FastAPI 애플리케이션 실행 (main_realtime.py 사용)
+CMD ["uvicorn", "main_realtime:app", "--host", "0.0.0.0", "--port", "3001", "--workers", "1"]

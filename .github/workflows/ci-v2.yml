@@ -1,0 +1,176 @@
+name: Life Bookshelf AI v2 - CI/CD
+
+on:
+  push:
+    branches: [ dev, feat/7-set-v2-deploy ]
+  pull_request:
+    branches: [ dev ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.9"
+  REGISTRY: 211125363878.dkr.ecr.ap-northeast-2.amazonaws.com
+  REPOSITORY: lifebookshelf-ai/v2
+  IMAGE_TAG: latest
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 의존성 캐시
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: 🔧 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🏗️ 애플리케이션 빌드 검증
+        run: |
+          # 테스트용 환경 파일 생성
+          echo "HOST=0.0.0.0" > serve/.env.test
+          echo "PORT=3001" >> serve/.env.test
+          echo "CHROMA_PERSIST_DIRECTORY=./chroma_db" >> serve/.env.test
+          echo "ENABLE_VECTOR_DB=true" >> serve/.env.test
+          echo "ENABLE_STREAMING=true" >> serve/.env.test
+          
+          # Python 모듈 import 테스트
+          cd serve
+          python -c "
+          import sys
+          sys.path.append('..')
+          try:
+              from main_realtime import app
+              from vector_service import VectorService
+              from streaming_service import StreamingService
+              print('===== 모든 모듈 import 성공')
+          except Exception as e:
+              print(f'❌ Import 실패: {e}')
+              sys.exit(1)
+          "
+
+      - name: 🧪 통합 테스트 실행
+        run: |
+          chmod +x test_integration.sh
+          ./test_integration.sh
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/feat/7-set-v2-deploy' || github.ref == 'refs/heads/dev'
+    
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Docker Buildx 설정
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker 이미지 빌드 및 푸시
+        run: |
+          # ECR 로그인
+          aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $REGISTRY
+          
+          # 배포용 디렉토리 준비
+          mkdir -p deploy-temp
+          cp -r serve deploy-temp/
+          cp -r shared deploy-temp/
+          cp requirements.txt deploy-temp/
+          cp deploy/ai/Dockerfile-v2 deploy-temp/Dockerfile
+          
+          # Docker 이미지 빌드 및 푸시
+          cd deploy-temp
+          docker buildx build \
+            --platform linux/amd64 \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            --push .
+
+      - name: 배포 패키지 생성 및 S3 업로드
+        run: |
+          # 배포 패키지 준비
+          mkdir -p deploy-package
+          cp -r deploy/* deploy-package/
+          cp -r serve deploy-package/
+          cp -r shared deploy-package/
+          cp requirements.txt deploy-package/
+          
+          # 환경 파일 생성
+          echo "${{ secrets.ENV_PRODUCTION }}" | base64 -d > deploy-package/.env.production
+          
+          # 배포 패키지 압축
+          zip -r deploy.zip deploy-package/
+          
+          # S3 업로드
+          aws s3 cp deploy.zip s3://${{ secrets.AWS_S3_DEPLOY_V2_MAIN_BUCKET_NAME }}/ai/deploy.zip
+
+      - name: 🚀 CodeDeploy 배포 실행
+        run: |
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name ${{ secrets.AWS_CODEDEPLOY_MAIN_APP_NAME }} \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --deployment-group-name ${{ secrets.AWS_CODEDEPLOY_AI_V2_GROUP_NAME }} \
+            --file-exists-behavior OVERWRITE \
+            --s3-location bucket=${{ secrets.AWS_S3_DEPLOY_V2_MAIN_BUCKET_NAME }},bundleType=zip,key=ai/deploy.zip \
+            --output text --query 'deploymentId')
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+          echo "===== 배포 시작: $DEPLOYMENT_ID"
+
+      - name: 배포 상태 확인 및 알림
+        run: |
+          TIMEOUT=600
+          INTERVAL=15
+          ELAPSED=0
+
+          echo "배포 상태 모니터링 시작..."
+          
+          while [ $ELAPSED -le $TIMEOUT ]; do
+            STATUS=$(aws deploy get-deployment --deployment-id $DEPLOYMENT_ID --output text --query 'deploymentInfo.status')
+            echo "현재 상태: $STATUS (경과시간: ${ELAPSED}초)"
+            
+            if [[ "$STATUS" == "Succeeded" ]]; then
+              echo "✅ 배포 성공!"
+              curl -H "Content-Type: application/json" \
+                   -d "{\"content\": \"🚀 **Life Bookshelf AI v2** 배포 성공!\\n- 배포 ID: \\\`$DEPLOYMENT_ID\\\`\\n- 브랜치: \\\`${{ github.ref_name }}\\\`\\n- 커밋: \\\`${{ github.sha }}\\\`\"}" \
+                   ${{ secrets.DISCORD_WEBHOOK_URL }}
+              exit 0
+            elif [[ "$STATUS" == "Failed" || "$STATUS" == "Stopped" ]]; then
+              echo "❌ 배포 실패!"
+              curl -H "Content-Type: application/json" \
+                   -d "{\"content\": \"🚨 **Life Bookshelf AI v2** 배포 실패!\\n- 배포 ID: \\\`$DEPLOYMENT_ID\\\`\\n- 브랜치: \\\`${{ github.ref_name }}\\\`\\n- 상태: \\\`$STATUS\\\`\"}" \
+                   ${{ secrets.DISCORD_WEBHOOK_URL }}
+              exit 1
+            fi
+            
+            sleep $INTERVAL
+            let ELAPSED=ELAPSED+INTERVAL
+          done
+
+          echo "⏲배포 타임아웃!"
+          curl -H "Content-Type: application/json" \
+               -d "{\"content\": \"⏲️ **Life Bookshelf AI v2** 배포 타임아웃!\\n- 배포 ID: \\\`$DEPLOYMENT_ID\\\`\\n- 경과시간: ${TIMEOUT}초\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+          exit 1
