@@ -153,27 +153,45 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Docker Buildx 설정
-        uses: docker/setup-buildx-action@v3
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Docker 이미지 빌드 및 푸시
-        run: |
-          # ECR 로그인
-          aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $REGISTRY
-          
-          # 배포용 디렉토리 준비
-          mkdir -p deploy-temp
-          cp -r serve deploy-temp/
-          cp -r shared deploy-temp/
-          cp requirements.txt deploy-temp/
-          cp deploy/ai/Dockerfile-v2 deploy-temp/Dockerfile
-          
-          # Docker 이미지 빌드 및 푸시
-          cd deploy-temp
-          docker buildx build \
-            --platform linux/amd64 \
-            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
-            --push .
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Set up Buildx (container driver)
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+          use: true
+          install: true
+
+      - name: Show builder info
+        run: docker buildx inspect --bootstrap
+
+      - name: Build & Push server v2 (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/ai/Dockerfile-v2
+          builder: ${{ steps.buildx.outputs.name }}   # ← 명시(안 써도 use:true면 기본으로 됨)
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai/v2:${{ github.sha }}
+
+      - name: Build & Push nginx (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/nginx/Dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai-nginx:${{ github.sha }}
 
       - name: 배포 패키지 생성 및 S3 업로드
         run: |
