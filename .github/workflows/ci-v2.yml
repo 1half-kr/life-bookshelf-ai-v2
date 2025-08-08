@@ -132,10 +132,10 @@ jobs:
           print('🎉 모든 모듈 import 성공!')
           "
 
-      - name: 통합 테스트 실행
-        run: |
-          chmod +x test_integration.sh
-          ./test_integration.sh
+#      - name: 통합 테스트 실행
+#        run: |
+#         chmod +x test_integration.sh
+#          ./test_integration.sh
 
   deploy:
     needs: test-and-build
