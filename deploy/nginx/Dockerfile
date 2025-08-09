@@ -6,7 +6,7 @@ RUN rm /etc/nginx/conf.d/default.conf \
     && rm /etc/nginx/nginx.conf
 
 # Copy custom nginx configuration
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY deploy/nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Create log directory with proper permissions
 RUN mkdir -p /var/log/nginx \
