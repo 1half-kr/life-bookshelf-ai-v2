@@ -14,7 +14,7 @@ class Config:
     
     # 서버 설정
     HOST = os.getenv("HOST", "0.0.0.0")
-    PORT = int(os.getenv("PORT", "3000"))
+    PORT = int(os.getenv("PORT", "3001"))
     
     # Vector Database 설정
     CHROMA_PERSIST_DIRECTORY = os.getenv("CHROMA_PERSIST_DIRECTORY", "./chroma_db")

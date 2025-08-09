@@ -286,6 +286,6 @@ async def get_stats():
 if __name__ == "__main__":
     import uvicorn
     print("🚀 Life Bookshelf AI v2 - Simple Service Starting...")
-    print("📍 Server: http://localhost:3000")
-    print("📖 API Docs: http://localhost:3000/docs")
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    print("📍 Server: http://localhost:3001")
+    print("📖 API Docs: http://localhost:3001/docs")
+    uvicorn.run(app, host="0.0.0.0", port=3001)

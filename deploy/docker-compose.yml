@@ -16,12 +16,11 @@ services:
 
   # Life Bookshelf AI v2 서비스
   lifebookshelf-ai-v2:
-    build:
-      context: ..
-      dockerfile: deploy/ai/Dockerfile-v2
+    image: "211125363878.dkr.ecr.ap-northeast-2.amazonaws.com/lifebookshelf-ai/v2:${IMAGE_TAG}"
+    restart: always
     container_name: lifebookshelf-ai-v2
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
       # Vector Database 영구 저장
       - chroma_data:/app/chroma_db
@@ -31,7 +30,6 @@ services:
       - serve/.env.production
     networks:
       - lifebookshelf-ai-network
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -41,18 +39,13 @@ services:
 
   # Nginx 리버스 프록시
   nginx:
-    build:
-      context: .
-      dockerfile: nginx/Dockerfile
+    image: "211125363878.dkr.ecr.ap-northeast-2.amazonaws.com/lifebookshelf-ai-nginx:${IMAGE_TAG}"
+    restart: always
     container_name: lifebookshelf-nginx
     ports:
       - "80:80"
-      - "8090:8090"  # 모니터링 포트
-    depends_on:
-      - lifebookshelf-ai-v2
     networks:
       - lifebookshelf-ai-network
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
