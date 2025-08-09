@@ -179,7 +179,7 @@ jobs:
           context: .
           file: deploy/ai/Dockerfile-v2
           builder: ${{ steps.buildx.outputs.name }}   # ← 명시(안 써도 use:true면 기본으로 됨)
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai/v2:${{ github.sha }}
 
@@ -189,7 +189,7 @@ jobs:
           context: .
           file: deploy/nginx/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai-nginx:${{ github.sha }}
 
