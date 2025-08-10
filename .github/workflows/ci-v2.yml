@@ -178,11 +178,12 @@ jobs:
 
       - name: 배포 패키지 생성 및 S3 업로드
         run: |
-          # 배포 패키지 준비
           mkdir -p deploy-package
-          cp -r deploy/* deploy-package/
-
-          # compose가 load 할 .env package
+          # 배포에 필요한 파일 모두 포함
+          cp deploy/docker-compose.yml deploy-package/
+          cp deploy/appspec.yml        deploy-package/
+          cp deploy/deploy.sh          deploy-package/
+          chmod +x deploy-package/deploy.sh
           echo "IMAGE_TAG=${{ github.sha }}" > deploy-package/.env
           
           # 환경 파일 생성
