@@ -196,6 +196,8 @@ jobs:
           
           # 환경 파일 생성
           echo "${{ secrets.ENV_V2_PRODUCTION }}" | base64 -d > deploy-package/.env.production
+
+          mkdir -p deploy-package/serve
           echo "${{ secrets.ENV_PRODUCTION }}" | base64 -d > deploy-package/serve/.env.production
           
       - name: Upload to S3 and deploy
