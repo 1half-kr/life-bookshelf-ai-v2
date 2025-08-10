@@ -27,7 +27,7 @@ services:
       # 로그 저장
       - logs_data:/app/logs
     env_file:
-      - serve/.env.production
+      - ./.env.production
     networks:
       - lifebookshelf-ai-network
     healthcheck:
