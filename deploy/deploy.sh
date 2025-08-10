@@ -28,7 +28,7 @@ echo "===== Vector Database 디렉토리 확인..."
 mkdir -p ./chroma_db ./logs
 chmod 755 ./chroma_db ./logs
 
-PROJECT_DIRECTORY="/home/ec2-user/deploy"
+PROJECT_DIRECTORY="/home/ec2-user/deploy/zip"
 
 # 0) ECR 로그인
 aws ecr get-login-password --region ap-northeast-2 \
@@ -60,8 +60,5 @@ echo "Checking /api/v1/health..."
 curl -sf http://localhost/api/v1/health || echo "❌ V1 behind nginx not ready"; exit 1;
 echo "Checking /api/v2/health..."
 curl -sf http://localhost/api/v2/health || echo "❌ V2 behind nginx not ready"; exit 1;
-
-echo "Running containers (compose project = lifebookshelf):"
-docker ps --filter label=com.docker.compose.project=lifebookshelf --format "table {{.Names}}\t{{.Status}}\t{{.Image}}\t{{.Ports}}"
 
 echo "====== Deployment finished."
