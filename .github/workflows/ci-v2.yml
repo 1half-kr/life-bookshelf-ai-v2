@@ -153,42 +153,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-
-      - name: Set up Buildx (container driver)
-        id: buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker-container
           use: true
-          install: true
 
-      - name: Show builder info
-        run: docker buildx inspect --bootstrap
-
-      - name: Build & Push server v2 (multi-arch)
+      - name: Build & Push server v2 (linux/amd64)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: deploy/ai/Dockerfile-v2
-          builder: ${{ steps.buildx.outputs.name }}   # ← 명시(안 써도 use:true면 기본으로 됨)
           platforms: linux/amd64
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai/v2:${{ github.sha }}
 
-      - name: Build & Push nginx (multi-arch)
+      - name: Build & Push nginx (linux/amd64)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: deploy/nginx/Dockerfile
-          builder: ${{ steps.buildx.outputs.name }}
           platforms: linux/amd64
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai-nginx:${{ github.sha }}
@@ -198,9 +181,6 @@ jobs:
           # 배포 패키지 준비
           mkdir -p deploy-package
           cp -r deploy/* deploy-package/
-          cp -r serve deploy-package/
-          cp -r shared deploy-package/
-          cp requirements.txt deploy-package/
 
           # compose가 load 할 .env package
           echo "IMAGE_TAG=${{ github.sha }}" > deploy-package/.env
@@ -226,38 +206,22 @@ jobs:
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
           echo "===== 배포 시작: $DEPLOYMENT_ID"
 
-      - name: 배포 상태 확인 및 알림
+      - name: Wait for deployment to complete
         run: |
-          TIMEOUT=600
-          INTERVAL=15
-          ELAPSED=0
-
-          echo "배포 상태 모니터링 시작..."
-          
-          while [ $ELAPSED -le $TIMEOUT ]; do
-            STATUS=$(aws deploy get-deployment --deployment-id $DEPLOYMENT_ID --output text --query 'deploymentInfo.status')
-            echo "현재 상태: $STATUS (경과시간: ${ELAPSED}초)"
-            
-            if [[ "$STATUS" == "Succeeded" ]]; then
-              echo "✅ 배포 성공!"
-              curl -H "Content-Type: application/json" \
-                   -d "{\"content\": \"🚀 **Life Bookshelf AI v2** 배포 성공!\\n- 배포 ID: \\\`$DEPLOYMENT_ID\\\`\\n- 브랜치: \\\`${{ github.ref_name }}\\\`\\n- 커밋: \\\`${{ github.sha }}\\\`\"}" \
-                   ${{ secrets.DISCORD_WEBHOOK_URL }}
-              exit 0
-            elif [[ "$STATUS" == "Failed" || "$STATUS" == "Stopped" ]]; then
-              echo "❌ 배포 실패!"
-              curl -H "Content-Type: application/json" \
-                   -d "{\"content\": \"🚨 **Life Bookshelf AI v2** 배포 실패!\\n- 배포 ID: \\\`$DEPLOYMENT_ID\\\`\\n- 브랜치: \\\`${{ github.ref_name }}\\\`\\n- 상태: \\\`$STATUS\\\`\"}" \
-                   ${{ secrets.DISCORD_WEBHOOK_URL }}
-              exit 1
-            fi
-            
-            sleep $INTERVAL
-            let ELAPSED=ELAPSED+INTERVAL
-          done
-
-          echo "⏲배포 타임아웃!"
-          curl -H "Content-Type: application/json" \
-               -d "{\"content\": \"⏲️ **Life Bookshelf AI v2** 배포 타임아웃!\\n- 배포 ID: \\\`$DEPLOYMENT_ID\\\`\\n- 경과시간: ${TIMEOUT}초\"}" \
-               ${{ secrets.DISCORD_WEBHOOK_URL }}
-          exit 1
+          echo "Waiting for deployment $DEPLOYMENT_ID to complete..."
+          aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
+        
+      - name: Deployment notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "deployment completed successfully!"
+          else
+            echo "deployment failed!"
+          fi
+        
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f deploy.zip
+          rm -rf deploy-package
