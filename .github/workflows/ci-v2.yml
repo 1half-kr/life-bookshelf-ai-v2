@@ -203,7 +203,9 @@ jobs:
       - name: Upload to S3 and deploy
         run: |
           # 배포 패키지 압축
-          zip -r deploy.zip deploy-package/
+          cd deploy-package
+          zip -r ../deploy.zip .
+          cd ..
           
           # S3 업로드
           aws s3 cp deploy.zip s3://${{ secrets.AWS_S3_DEPLOY_V2_MAIN_BUCKET_NAME }}/ai/deploy.zip
