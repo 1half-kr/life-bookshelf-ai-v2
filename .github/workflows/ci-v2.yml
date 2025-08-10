@@ -189,6 +189,8 @@ jobs:
           # 환경 파일 생성
           echo "${{ secrets.ENV_PRODUCTION }}" | base64 -d > deploy-package/.env.production
           
+      - name: Upload to S3 and deploy
+        run: |
           # 배포 패키지 압축
           zip -r deploy.zip deploy-package/
           
