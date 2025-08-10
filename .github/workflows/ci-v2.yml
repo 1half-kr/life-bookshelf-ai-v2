@@ -158,21 +158,21 @@ jobs:
         with:
           use: true
 
-      - name: Build & Push server v2 (linux/amd64)
+      - name: Build & Push server v2 (multi-arch)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: deploy/ai/Dockerfile-v2
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai/v2:${{ github.sha }}
 
-      - name: Build & Push nginx (linux/amd64)
+      - name: Build & Push nginx (multi-arch)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: deploy/nginx/Dockerfile
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai-nginx:${{ github.sha }}
 
