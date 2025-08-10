@@ -24,10 +24,6 @@ echo "$(date): Deployment started by $(whoami)" > "$LOCK_FILE"
 cleanup(){ echo "Unlock"; rm -f "$LOCK_FILE"; }
 trap cleanup EXIT
 
-echo "===== Vector Database 디렉토리 확인..."
-mkdir -p ./chroma_db ./logs
-chmod 755 ./chroma_db ./logs
-
 PROJECT_DIRECTORY="/home/ec2-user/deploy/zip"
 
 # 0) ECR 로그인
@@ -36,6 +32,11 @@ aws ecr get-login-password --region ap-northeast-2 \
 
 # 2) 새롭게 docker compose pull & 실행
 cd "$PROJECT_DIRECTORY"
+
+echo "===== Vector Database 디렉토리 확인..."
+mkdir -p ./chroma_db ./logs
+chmod 755 ./chroma_db ./logs
+
 $COMPOSE up -d --pull always --force-recreate --remove-orphans
 
 # 3) 불필요 리소스 청소(이 앱과 무관한 글로벌 dangling만)
