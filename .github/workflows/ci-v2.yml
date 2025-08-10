@@ -195,7 +195,8 @@ jobs:
           echo "IMAGE_TAG=${{ github.sha }}" > deploy-package/.env
           
           # 환경 파일 생성
-          echo "${{ secrets.ENV_PRODUCTION }}" | base64 -d > deploy-package/.env.production
+          echo "${{ secrets.ENV_V2_PRODUCTION }}" | base64 -d > deploy-package/.env.production
+          echo "${{ secrets.ENV_PRODUCTION }}" | base64 -d > deploy-package/serve/.env.production
           
       - name: Upload to S3 and deploy
         run: |
