@@ -5,7 +5,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # 로그 파일로 이중 출력
-exec > >(tee -a /var/log/lifebookshelf-deploy.log) 2>&1
+exec > >(sudo tee -a /var/log/lifebookshelf-deploy.log) 2>&1
 set -x
 
 echo "====== Life Bookshelf AI v2 배포 시작..."
