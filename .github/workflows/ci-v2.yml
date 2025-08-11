@@ -30,12 +30,13 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: 의존성 캐시
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+       - name: 의존성 캐시
+         uses: actions/cache@v4
+         with:
+           path: ~/.cache/pip
+           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+           restore-keys: |
+             ${{ runner.os }}-pip-
 
       - name: 🔧 의존성 설치
         run: |
