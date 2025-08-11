@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 class VectorService:
     """Vector Database를 사용한 개인화 서비스"""
     
-    def __init__(self, persist_directory: str = "./chroma_db"):
+    def __init__(self, persist_directory: str = None):
+        if persist_directory is None:
+            from config import CHROMA_PERSIST_DIRECTORY
+            persist_directory = CHROMA_PERSIST_DIRECTORY
         self.persist_directory = persist_directory
         self.model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
         

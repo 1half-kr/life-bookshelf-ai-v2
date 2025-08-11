@@ -4,7 +4,7 @@ echo "=== Life Bookshelf AI v2 통합 테스트 ==="
 echo ""
 
 # 서버 URL 설정
-SERVER_URL="http://localhost:3000"
+SERVER_URL="http://localhost:3001"
 
 # 1. 헬스체크
 echo "1. 헬스체크..."

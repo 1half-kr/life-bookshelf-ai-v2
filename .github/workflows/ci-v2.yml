@@ -1,0 +1,247 @@
+name: Life Bookshelf AI v2 - CI/CD
+
+on:
+  push:
+    branches: [ dev, feat/7-set-v2-deploy ]
+  pull_request:
+    branches: [ dev ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.9"
+  REGISTRY: 211125363878.dkr.ecr.ap-northeast-2.amazonaws.com
+  REPOSITORY: lifebookshelf-ai/v2
+  IMAGE_TAG: latest
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+       - name: Python 설정
+        uses: actions/setup-python@v5
+         with:
+           python-version: ${{ env.PYTHON_VERSION }}
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 의존성 캐시
+       - name: 의존성 캐시
+         uses: actions/cache@v4
+         with:
+           path: ~/.cache/pip
+           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+           restore-keys: |
+             ${{ runner.os }}-pip-
+
+      - name: 🔧 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade setuptools wheel
+          
+          # 의존성 설치 (재시도 로직 포함)
+          for i in {1..3}; do
+            echo "🔄 의존성 설치 시도 $i/3"
+            if pip install -r requirements.txt; then
+              echo "✅ 의존성 설치 성공"
+              break
+            else
+              echo "❌ 의존성 설치 실패, 재시도 중..."
+              if [ $i -eq 3 ]; then
+                echo "💥 최종 설치 실패"
+                exit 1
+              fi
+              sleep 5
+            fi
+          done
+          
+          # 설치된 패키지 확인
+          pip list | grep -E "(chromadb|sentence-transformers|huggingface-hub|transformers)"
+
+      - name: 애플리케이션 빌드 검증
+        run: |
+          # 테스트용 환경 파일 생성
+          echo "HOST=0.0.0.0" > serve/.env.test
+          echo "PORT=3001" >> serve/.env.test
+          echo "CHROMA_PERSIST_DIRECTORY=./chroma_db" >> serve/.env.test
+          echo "ENABLE_VECTOR_DB=true" >> serve/.env.test
+          echo "ENABLE_STREAMING=true" >> serve/.env.test
+          
+          # 의존성 호환성 확인
+          pip check
+          
+          # Python 모듈 import 테스트 (개별적으로)
+          cd serve
+          echo "🔍 Testing individual module imports..."
+          
+          python -c "
+          import sys
+          sys.path.append('..')
+          
+          # 기본 모듈들 먼저 테스트
+          try:
+              import fastapi
+              import uvicorn
+              import pydantic
+              print('✅ FastAPI 관련 모듈 import 성공')
+          except Exception as e:
+              print(f'❌ FastAPI 모듈 import 실패: {e}')
+              sys.exit(1)
+          
+          # Vector 관련 모듈 테스트
+          try:
+              import chromadb
+              import sentence_transformers
+              print('✅ Vector DB 관련 모듈 import 성공')
+          except Exception as e:
+              print(f'❌ Vector DB 모듈 import 실패: {e}')
+              sys.exit(1)
+          
+          # 애플리케이션 모듈 테스트
+          try:
+              from config import Config
+              print('✅ Config 모듈 import 성공')
+          except Exception as e:
+              print(f'❌ Config 모듈 import 실패: {e}')
+              sys.exit(1)
+          
+          try:
+              from vector_service import VectorService
+              print('✅ VectorService 모듈 import 성공')
+          except Exception as e:
+              print(f'❌ VectorService 모듈 import 실패: {e}')
+              sys.exit(1)
+          
+          try:
+              from streaming_service import StreamingService
+              print('✅ StreamingService 모듈 import 성공')
+          except Exception as e:
+              print(f'❌ StreamingService 모듈 import 실패: {e}')
+              sys.exit(1)
+          
+          try:
+              from main_realtime import app
+              print('✅ FastAPI 앱 import 성공')
+          except Exception as e:
+              print(f'❌ FastAPI 앱 import 실패: {e}')
+              sys.exit(1)
+          
+          print('🎉 모든 모듈 import 성공!')
+          "
+
+#      - name: 통합 테스트 실행
+#        run: |
+#         chmod +x test_integration.sh
+#          ./test_integration.sh
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/feat/7-set-v2-deploy' || github.ref == 'refs/heads/dev'
+    
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up QEMU (only if building arm64 too)
+        if: contains('linux/amd64,linux/arm64', 'arm64')
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          use: true
+
+      - name: Build & Push server v2 (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/ai/Dockerfile-v2
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai/v2:${{ github.sha }}
+
+      - name: Build & Push nginx (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/nginx/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/lifebookshelf-ai-nginx:${{ github.sha }}
+
+      - name: 배포 패키지 생성 및 S3 업로드
+        run: |
+          mkdir -p deploy-package
+          # 배포에 필요한 파일 모두 포함
+          cp deploy/docker-compose.yml deploy-package/
+          cp deploy/appspec.yml        deploy-package/
+          cp deploy/deploy.sh          deploy-package/
+          chmod +x deploy-package/deploy.sh
+          echo "IMAGE_TAG=${{ github.sha }}" > deploy-package/.env
+          
+          # 환경 파일 생성
+          echo "${{ secrets.ENV_V2_PRODUCTION }}" | base64 -d > deploy-package/.env.production
+
+          mkdir -p deploy-package/serve
+          echo "${{ secrets.ENV_PRODUCTION }}" | base64 -d > deploy-package/serve/.env.production
+          
+      - name: Upload to S3 and deploy
+        run: |
+          # 배포 패키지 압축
+          cd deploy-package
+          zip -r ../deploy.zip .
+          cd ..
+          
+          # S3 업로드
+          aws s3 cp deploy.zip s3://${{ secrets.AWS_S3_DEPLOY_V2_MAIN_BUCKET_NAME }}/ai/deploy.zip
+
+      - name: CodeDeploy 배포 실행
+        run: |
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name ${{ secrets.AWS_CODEDEPLOY_MAIN_APP_NAME }} \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --deployment-group-name ${{ secrets.AWS_CODEDEPLOY_AI_V2_GROUP_NAME }} \
+            --file-exists-behavior OVERWRITE \
+            --s3-location bucket=${{ secrets.AWS_S3_DEPLOY_V2_MAIN_BUCKET_NAME }},bundleType=zip,key=ai/deploy.zip \
+            --output text --query 'deploymentId')
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+          echo "===== 배포 시작: $DEPLOYMENT_ID"
+
+      - name: Wait for deployment to complete
+        run: |
+          echo "Waiting for deployment $DEPLOYMENT_ID to complete..."
+          aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
+        
+      - name: Deployment notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "deployment completed successfully!"
+          else
+            echo "deployment failed!"
+          fi
+        
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f deploy.zip
+          rm -rf deploy-package

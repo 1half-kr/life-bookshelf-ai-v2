@@ -16,7 +16,7 @@ APP_NAME = os.getenv("APP_NAME", "Life Bookshelf AI v2")
 APP_VERSION = os.getenv("APP_VERSION", "2.1.0")
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", 3000))
+PORT = int(os.getenv("PORT", 3001))
 
 # AWS Bedrock settings
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
