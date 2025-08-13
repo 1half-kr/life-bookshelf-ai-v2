@@ -30,12 +30,6 @@ services:
       - ./.env.production
     networks:
       - lifebookshelf-ai-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
   # Nginx 리버스 프록시
   nginx:

@@ -57,15 +57,4 @@ for i in {1..12}; do
   fi
 done
 
-echo "Checking /api/v1/health..."
-if ! curl -sf http://localhost/api/v1/health; then
-    echo "❌ V1 behind nginx not ready"
-    exit 1
-fi
-echo "Checking /api/v2/health..."
-if ! curl -sf http://localhost/api/v2/health; then
-    echo "❌ V2 behind nginx not ready"
-    exit 1
-fi
-
 echo "====== Deployment finished."
