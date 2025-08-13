@@ -140,7 +140,7 @@ jobs:
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feat/7-set-v2-deploy' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/feat/9-v2-controller-deploy' || github.ref == 'refs/heads/dev'
     
     steps:
       - name: 체크아웃
