@@ -2,7 +2,7 @@ name: Life Bookshelf AI v2 - CI/CD
 
 on:
   push:
-    branches: [ dev, feat/7-set-v2-deploy ]
+    branches: [ dev, feat/9-v2-controller-deploy ]
   pull_request:
     branches: [ dev ]
   workflow_dispatch:
@@ -25,17 +25,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Python 설정
-       - name: Python 설정
         uses: actions/setup-python@v5
-         with:
-           python-version: ${{ env.PYTHON_VERSION }}
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: 의존성 캐시
-       - name: 의존성 캐시
-         uses: actions/cache@v4
-         with:
+        uses: actions/cache@v4
+        with:
            path: ~/.cache/pip
            key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
            restore-keys: |
@@ -144,7 +140,7 @@ jobs:
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feat/7-set-v2-deploy' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/feat/9-v2-controller-deploy' || github.ref == 'refs/heads/dev'
     
     steps:
       - name: 체크아웃
@@ -195,6 +191,7 @@ jobs:
           cp deploy/docker-compose.yml deploy-package/
           cp deploy/appspec.yml        deploy-package/
           cp deploy/deploy.sh          deploy-package/
+          cp -r deploy/nginx deploy-package/
           chmod +x deploy-package/deploy.sh
           echo "IMAGE_TAG=${{ github.sha }}" > deploy-package/.env
           

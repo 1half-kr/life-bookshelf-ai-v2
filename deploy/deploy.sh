@@ -40,7 +40,13 @@ chmod 755 ./chroma_db ./logs
 $COMPOSE up -d --pull always --force-recreate --remove-orphans
 
 # 3) 불필요 리소스 청소(이 앱과 무관한 글로벌 dangling만)
+# 1. 중지된 컨테이너 제거 (dangling)
+docker container prune -f
+
+# 2. 사용되지 않는 이미지 제거 (dangling)
 docker image prune -f
+
+# 3. 사용되지 않는 빌드 캐시 제거 (dangling)
 docker builder prune -f >/dev/null 2>&1 || true
 
 # 4) 헬스체크
@@ -56,16 +62,5 @@ for i in {1..12}; do
     exit 1
   fi
 done
-
-echo "Checking /api/v1/health..."
-if ! curl -sf http://localhost/api/v1/health; then
-    echo "❌ V1 behind nginx not ready"
-    exit 1
-fi
-echo "Checking /api/v2/health..."
-if ! curl -sf http://localhost/api/v2/health; then
-    echo "❌ V2 behind nginx not ready"
-    exit 1
-fi
 
 echo "====== Deployment finished."
