@@ -191,6 +191,7 @@ jobs:
           cp deploy/docker-compose.yml deploy-package/
           cp deploy/appspec.yml        deploy-package/
           cp deploy/deploy.sh          deploy-package/
+          cp -r deploy/nginx deploy-package/
           chmod +x deploy-package/deploy.sh
           echo "IMAGE_TAG=${{ github.sha }}" > deploy-package/.env
           
