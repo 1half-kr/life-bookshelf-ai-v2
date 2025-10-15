@@ -19,7 +19,8 @@
       - **generate_chapter**
   - interviews
     - chat
-      - **interview_chat**
+      - **interview_chat_v1** (대화 히스토리 기반)
+      - **interview_chat_v2** (메트릭 기반)
     - evaluation
     - standard
       - **generate_interview_question**
@@ -32,7 +33,8 @@
     - **generate_chapter**
   - interviews
     - **generate_interview_question**
-    - **interview_chat**
+    - **interview_chat** (v1 라우터)
+    - **interview_chat_v2** (메트릭 기반)
 
 autobiobraphies, chapters, interviews 총 3개의 도메인이 존재합니다.
 
@@ -214,3 +216,60 @@ python -m uvicorn main:app --env-file .env.development --port 3000
 서버가 정상적으로 실행되었을 경우 위와 같은 로그가 출력됩니다. (실제 로그는 3000포트로 출력됩니다.)
 
 http://localhost:3000/docs 에서 API 문서를 확인할 수 있습니다. (사용 방법 참고: [Life Bookshelf Server](https://github.com/life-librarians/life-bookshelf-server?tab=readme-ov-file#swagger-%EC%9D%B4%EC%9A%A9-%EB%B0%A9%EB%B2%95))
+
+### v2 API 테스트
+
+Swagger UI에서 `/api/v2/interviews/interview-chat` 엔드포인트를 확인할 수 있습니다.
+
+
+
+## Interview Chat V2 (메트릭 기반 질문 생성)
+
+### 개요
+
+v2는 소재별 6W(who/why/when/how/where/what) 축 완성도를 추적하여 체계적으로 질문을 생성합니다.
+
+### 폴더 구조
+
+```
+flows/interviews/chat/interview_chat_v2/
+  - flow.dag.yaml
+  - nodes/
+    - 01_parse_answer.py          # 응답 파서 (키워드, 축, 구체성 추출)
+    - 02_update_metrics.py        # 메트릭 갱신 (6W 축, 예시, 구체성)
+    - 03_generate_candidates.py   # 미완성 축에 대한 질문 생성
+    - 04_select_questions.py      # 질문 선택 알고리즘
+
+serve/interviews/interview_chat_v2/
+  - router/
+    - __init__.py                 # POST /api/v2/interviews/interview-chat
+  - dto/
+    - __init__.py                 # 요청/응답 스키마 (Pydantic)
+  - README.md                     # API 사용 가이드
+```
+
+### API 엔드포인트
+
+- **v1**: `POST /api/v1/interviews/interview-chat` (대화 히스토리 기반)
+- **v2**: `POST /api/v2/interviews/interview-chat` (메트릭 기반)
+
+### v2 주요 기능
+
+1. **응답 파싱**: 룰 기반 + LLM 기반 키워드 추출
+2. **메트릭 추적**: 소재별 6W 축 완성도, 예시/구체성 플래그
+3. **질문 생성**: 미완성 축에 대한 LLM 질문 생성 (템플릿 폴백)
+4. **질문 선택**: 청크 가중치 기반 우선순위 알고리즘
+
+자세한 사용법은 `serve/interviews/interview_chat_v2/README.md` 참고
+
+## 상세 문서 링크
+
+### Flows
+- [Interview Chat V1 (대화 히스토리 기반)](flows/interviews/chat/interview_chat_v1/README.md)
+- [Interview Chat V2 (메트릭 기반)](flows/interviews/chat/interview_chat_v2/README.md)
+- [Generate Interview Questions V2](flows/interviews/standard/generate_interview_questions_v2/README.md)
+
+### Serve
+- [Interviews API 가이드](serve/interviews/readme.md)
+- [Interview Chat V2 API](serve/interviews/interview_chat_v2/README.md)
+- [API 테스트 가이드](serve/TEST_GUIDE.md)

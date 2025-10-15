@@ -6,7 +6,7 @@ from constants import Gender
 
 class UserInfoDto(BaseModel):
     user_name: str = Field(default="최시원")
-    date_of_birth: date = Field(default="2000-02-21")
+    date_of_birth: date = Field(default=date(2000, 2, 21))
     gender: Gender = Field(default=Gender.FEMALE)
     has_children: bool = Field(default=False)
     occupation: str = Field(default="프로그래머")

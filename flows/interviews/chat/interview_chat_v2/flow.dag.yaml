@@ -1,0 +1,45 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+inputs:
+  sessionId:
+    type: string
+  question:
+    type: object
+  answer_text:
+    type: string
+  metrics:
+    type: object
+  question_pool:
+    type: list
+  use_llm_keywords:
+    type: bool
+    default: false
+outputs:
+  next_question:
+    type: object
+    reference: ${select.output.next_question}
+nodes:
+- name: parse
+  type: python
+  source:
+    type: code
+    path: nodes/01_parse_answer.py
+  inputs:
+    question: ${inputs.question}
+    answer_text: ${inputs.answer_text}
+    metrics: ${inputs.metrics}
+    use_llm_keywords: ${inputs.use_llm_keywords}
+- name: update
+  type: python
+  source:
+    type: code
+    path: nodes/02_update_metrics.py
+  inputs:
+    parsed: ${parse.output.parsed}
+    metrics: ${inputs.metrics}
+- name: select
+  type: python
+  source:
+    type: code
+    path: nodes/03_select_and_generate.py
+  inputs:
+    metrics_updated: ${update.output.metrics_updated}

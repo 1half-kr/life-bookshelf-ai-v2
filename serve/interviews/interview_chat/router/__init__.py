@@ -30,7 +30,7 @@ async def generate_interview_chat(
 
     try:
         # Collect the results as they are returned by the flow
-        flow = Flow.load("../flows/interviews/standard/interview_chat/flow.dag.yaml")
+        flow = Flow.load("../flows/interviews/chat/interview_chat_v1/flow.dag.yaml")
 
         # 스트리밍 제너레이터 함수 정의
         def stream_autobiography():

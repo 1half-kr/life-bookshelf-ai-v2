@@ -1,0 +1,199 @@
+{
+  "session_start": {
+    "sessionId": "test-session-001",
+    "theme": "나의 대학 시절",
+    "metrics": {
+      "sessionId": "test-session-001",
+      "theme": "나의 대학 시절",
+      "categories": {
+        "cat_1": {
+          "category_num": 1,
+          "category_name": "학업",
+          "chunks": {
+            "chunk_1_1": {
+              "chunk_num": 1,
+              "chunk_name": "전공 공부",
+              "materials": {
+                "mat_1_1_1": {
+                  "material_num": 1,
+                  "material_name": "좋아했던 과목",
+                  "w": [0, 0, 0, 0, 0, 0],
+                  "ex": 0,
+                  "con": 0,
+                  "material_count": 0,
+                  "utter_freq": 0
+                },
+                "mat_1_1_2": {
+                  "material_num": 2,
+                  "material_name": "어려웠던 과목",
+                  "w": [0, 0, 0, 0, 0, 0],
+                  "ex": 0,
+                  "con": 0,
+                  "material_count": 0,
+                  "utter_freq": 0
+                }
+              }
+            },
+            "chunk_1_2": {
+              "chunk_num": 2,
+              "chunk_name": "과제와 시험",
+              "materials": {
+                "mat_1_2_1": {
+                  "material_num": 3,
+                  "material_name": "기억에 남는 과제",
+                  "w": [0, 0, 0, 0, 0, 0],
+                  "ex": 0,
+                  "con": 0,
+                  "material_count": 0,
+                  "utter_freq": 0
+                }
+              }
+            }
+          },
+          "chunk_weight": {
+            "chunk_1_1": 2,
+            "chunk_1_2": 1
+          }
+        },
+        "cat_2": {
+          "category_num": 2,
+          "category_name": "친구",
+          "chunks": {
+            "chunk_2_1": {
+              "chunk_num": 1,
+              "chunk_name": "친한 친구들",
+              "materials": {
+                "mat_2_1_1": {
+                  "material_num": 4,
+                  "material_name": "가장 친했던 친구",
+                  "w": [0, 0, 0, 0, 0, 0],
+                  "ex": 0,
+                  "con": 0,
+                  "material_count": 0,
+                  "utter_freq": 0
+                },
+                "mat_2_1_2": {
+                  "material_num": 5,
+                  "material_name": "동아리 친구들",
+                  "w": [0, 0, 0, 0, 0, 0],
+                  "ex": 0,
+                  "con": 0,
+                  "material_count": 0,
+                  "utter_freq": 0
+                }
+              }
+            }
+          },
+          "chunk_weight": {
+            "chunk_2_1": 3
+          }
+        }
+      },
+      "engine_state": {
+        "last_material_id": [],
+        "last_material_streak": 0,
+        "epsilon": 0.1
+      },
+      "asked_total": 0,
+      "policyVersion": "v1.2.0"
+    },
+    "categories": {
+      "cat_1": {
+        "category_num": 1,
+        "category_name": "학업",
+        "chunks": {
+          "chunk_1_1": {
+            "chunk_num": 1,
+            "chunk_name": "전공 공부",
+            "materials": {
+              "mat_1_1_1": {
+                "material_num": 1,
+                "material_name": "좋아했던 과목",
+                "w": [0, 0, 0, 0, 0, 0],
+                "ex": 0,
+                "con": 0,
+                "material_count": 0,
+                "utter_freq": 0
+              },
+              "mat_1_1_2": {
+                "material_num": 2,
+                "material_name": "어려웠던 과목",
+                "w": [0, 0, 0, 0, 0, 0],
+                "ex": 0,
+                "con": 0,
+                "material_count": 0,
+                "utter_freq": 0
+              }
+            }
+          },
+          "chunk_1_2": {
+            "chunk_num": 2,
+            "chunk_name": "과제와 시험",
+            "materials": {
+              "mat_1_2_1": {
+                "material_num": 3,
+                "material_name": "기억에 남는 과제",
+                "w": [0, 0, 0, 0, 0, 0],
+                "ex": 0,
+                "con": 0,
+                "material_count": 0,
+                "utter_freq": 0
+              }
+            }
+          }
+        },
+        "chunk_weight": {
+          "chunk_1_1": 2,
+          "chunk_1_2": 1
+        }
+      },
+      "cat_2": {
+        "category_num": 2,
+        "category_name": "친구",
+        "chunks": {
+          "chunk_2_1": {
+            "chunk_num": 1,
+            "chunk_name": "친한 친구들",
+            "materials": {
+              "mat_2_1_1": {
+                "material_num": 4,
+                "material_name": "가장 친했던 친구",
+                "w": [0, 0, 0, 0, 0, 0],
+                "ex": 0,
+                "con": 0,
+                "material_count": 0,
+                "utter_freq": 0
+              },
+              "mat_2_1_2": {
+                "material_num": 5,
+                "material_name": "동아리 친구들",
+                "w": [0, 0, 0, 0, 0, 0],
+                "ex": 0,
+                "con": 0,
+                "material_count": 0,
+                "utter_freq": 0
+              }
+            }
+          }
+        },
+        "chunk_weight": {
+          "chunk_2_1": 3
+        }
+      }
+    }
+  },
+  "interview_chat_turn1": {
+    "sessionId": "test-session-001",
+    "question": {
+      "id": "q_001",
+      "material": "좋아했던 과목",
+      "type": "open"
+    },
+    "answerText": "저는 데이터베이스 수업을 정말 좋아했어요. 김교수님이 가르치셨는데, 실습 위주로 진행되어서 재미있었습니다. 2학년 2학기 때 들었던 것 같아요.",
+    "question_pool": [],
+    "use_llm_keywords": false
+  },
+  "session_end": {
+    "sessionId": "test-session-001"
+  }
+}

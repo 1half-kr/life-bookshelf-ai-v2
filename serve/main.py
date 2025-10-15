@@ -20,6 +20,9 @@ from interviews.generate_interview_question.router import (
 from interviews.interview_chat.router import (
     router as interviews_request_interview_chat_router,
 )
+from interviews.interview_chat_v2.router import (
+    router as interviews_request_interview_chat_v2_router,
+)
 
 from logs import get_logger
 
@@ -66,6 +69,7 @@ app.include_router(autobiographies_generate_correction_router)
 app.include_router(autobiographies_generate_chapter_router)
 app.include_router(interviews_generate_interview_question_router)
 app.include_router(interviews_request_interview_chat_router)
+app.include_router(interviews_request_interview_chat_v2_router)
 
 
 if __name__ == "__main__":
